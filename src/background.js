@@ -1,131 +1,122 @@
-var ZERO = BigInteger.ZERO;
-var ONE = BigInteger.ONE;
-
-
-function FromBytes(x) {
-  var a = 2**x.length;
-  var t = a&7;
-  if(t > 0) x[0] &= ((1<<t)-1); else x[0] = 0;
-  var b = nbi();
-  b.fromString(x,256);
-  return b;
-}
-
-
-
-function AsInt(bytes) {
-  return new BigInteger(bytes);
-}
-
-function Token(pubkey) {
+function RandArray() {
   var bytes = new Uint8Array(32);
   window.crypto.getRandomValues(bytes);
-  this.bytes = bytes;
-
-  var blinder = new Uint8Array(32);
-  window.crypto.getRandomValues(blinder);
-  this.blinder = blinder;
-
-  this.blinded = Blind(pubkey, bytes, blinder);
+  return Array.from(bytes);
 }
 
-Token.prototype = {};
-
-
-function Blind(pubkey, token, blinder) {
-  // blind a token and return it with the blinding factor
-  var t = new BigInteger(token);
-  var b = new BigInteger(blinder);
-  var blinded = t.multiply(pubkey.doPublic(b)).mod(pubkey.n);
-  return blinded.toByteArray()
+// For decoding RSA numbers.
+function base64UrlDecode(str) {
+  str = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
+  var buffer = new Uint8Array(str.length);
+  for(var i = 0; i < str.length; ++i) {
+    buffer[i] = str.charCodeAt(i);
+  }
+  return buffer;
 }
 
+// Generate an RSA key for testing.
+function GenKey(callback) {
+  window.crypto.subtle.generateKey({
+    name: "RSASSA-PKCS1-v1_5",
+    modulusLength: 2048,
+    publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
+    hash: {
+      name: "SHA-256"
+    },
+  }, true, ["sign", "verify"]).then(function(keyPair) {
+    window.crypto.subtle.exportKey("jwk", keyPair.privateKey).then(
+      function(key) {
+        n = base64UrlDecode(key.n);
+        e = base64UrlDecode(key.e);
+        d = base64UrlDecode(key.d);
+        var k = new Key(n, e, d);
+        callback(k);
+      });
+  });
+}
+
+// takes bytes, sets as BN's
+function Key(n, e, d) {
+  // byte arrays
+  this.n = new BN(n);
+  this.e = new BN(e);
+  this.d = new BN(d);
+}
+
+// Token constructer.
+// Does blinding at construction time.
+function Token(pubkey) {
+  // byte arrays
+  this.bytes = RandArray();
+  this.blinder = RandArray();
+  this.setHash(this);
+
+  this.blinded = Blind(pubkey, this.hash, this.blinder);
+}
+
+Token.prototype.setHash = function (token) {
+  doHash(token.bytes, function (hashed){
+      token.hash = hashed;
+  })
+}
+
+function doHash(bytes, callback) {
+  window.crypto.subtle.digest(
+      { name: "SHA-256", },
+      Uint8Array.from(bytes)
+  )
+  .then(function(hashed) {
+      callback(Array.from(hashed));
+  });
+}
+
+// Create the blinded message
+function Blind(pubkey, hashed, blinder) {
+  var red = BN.red(pubkey.n);
+
+  var t = new BN(hashed).toRed(red);
+  var b = new BN(blinder).toRed(red);
+
+  // m r**e % n
+  var blinded = t.redMul(b.redPow(pubkey.e));
+
+  return blinded.toArray();
+}
+
+// Server signs blinded message
 function BlindSign(privkey, blinded) {
-  var b = new BigInteger(blinded)
-  return privkey.doPrivate(b).toByteArray();
+  var red = BN.red(privkey.n);
+
+  var b = new BN(blinded).toRed(red);
+
+  //  b**d % n
+  var blindSig = b.redPow(privkey.d);
+  return blindSig.toArray();
 }
 
-function Unblind(pk, token, blindSig) {
-  var b = AsInt(token.blinder);
-  var blindinv = EucInvMod(AsInt(token.blinder), pk.n);
+// Client unblinds signature
+function Unblind(pubkey, token, blindSig) {
+  var red = BN.red(pubkey.n);
 
-  return (AsInt(blindSig).multiply(blindinv)).mod(pk.n).toByteArray();
+  var bs = new BN(blindSig).toRed(red);
+
+  var r = new BN(token.blinder).toRed(red);
+  var rinv = r.redInvm();
+
+  // bs rinv % n
+  var sig = (bs.redMul(rinv));
+  return sig.toArray();
 }
 
-function CheckSig(pk, token, sig) {
-  var res = AsInt(token.bytes).compareTo(pk.doPublic(AsInt(sig)));
+function VerifySig(pubkey, token, sig, callback) {
+  doHash(token.bytes, function (hashed) {
+    var red = BN.red(pubkey.n);
 
-  return res === 0;
-}
+    var t = new BN(hashed).toRed(red);
+    var s = new BN(sig).toRed(red);
 
-
-function EucInvMod(g, n) {
-  var z = nbi();
-  EuclideanGCD(z, null, g, n);
-  if (z.compareTo(BigInteger.ZERO) < 0) {
-    z.addTo(n, z);
-  }
-  return z
-}
-
-function EuclideanGCD(x, y, a, b) {
-  var z = nbi();
-  if ((a.compareTo(ZERO) <= 0) || (b.compareTo(ZERO) <= 0)) {
-    z = nbv(0);
-    if (x === null) {
-      x = nbv(0);
-    }
-    if (y === null) {
-      y = nbv(0);
-    }
-    return z
-  }
-
-  if (x === null && y === null) {
-    return a.gcd(b);
-  }
-
-  var A = nbi();
-  var B = nbi();
-  a.copyTo(A);
-  b.copyTo(B);
-
-  var X = nbv(0);
-  var lastY = nbv(0);
-  var q = nbv(0);
-  var temp = nbv(0);
-  var r = nbv(0);
-
-  var Y = nbv(1);
-  var lastX = nbv(1);
-
-  while (B.compareTo(ZERO) != 0) {
-    A.divRemTo(B, q, r);
-    B.copyTo(A);
-    r.copyTo(B);
-    A.copyTo(r);
-
-    X.copyTo(temp);
-    X = X.multiply(q);
-    X = X.negate();
-    X = X.add(lastX);
-    temp.copyTo(lastX);
-
-    Y.copyTo(temp);
-    Y = Y.multiply(q);
-    Y = Y.negate();
-    Y = Y.add(lastY);
-    temp.copyTo(lastY);
-  }
-
-  if (x !== null) {
-    lastX.copyTo(x);
-  }
-
-  if (y !== null) {
-    lastY.copyTo(y);
-  }
-
-  A.copyTo(z);
-  return z
+    // hashed == sig**e % n
+    var res = s.redPow(pubkey.e).eq(t);
+    callback(res);
+  });
 }
