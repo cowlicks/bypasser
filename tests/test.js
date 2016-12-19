@@ -1,23 +1,3 @@
-QUnit.test('randarr', function(assert) {
-    assert.equal(RandArray().length, 32);
-});
-
-QUnit.test('fromarr', function(assert) {
-    var arr = new Uint8Array([0x01, 0x00, 0x01]);
-    var bn = new BN(arr);
-    assert.ok(bn == 65537);
-    assert.ok(bn.toNumber() === 65537);
-});
-
-QUnit.test('genkey', function(assert) {
-  var done = assert.async();
-  GenKey(function (key) {
-    assert.equal(key.e.toNumber(), 65537);
-    assert.deepEqual(key.e.toArray(), [0x01, 0x00, 0x01]);
-    done();
-  });
-});
-
 QUnit.test('integration-test', function(assert) {
   var done = assert.async();
   GenKey(function (key) {
@@ -37,4 +17,24 @@ QUnit.test('integration-test', function(assert) {
       done();
     })
   })
+});
+
+QUnit.test('randarr', function(assert) {
+    assert.equal(RandArray().length, 32);
+});
+
+QUnit.test('BN works like I think it does', function(assert) {
+    var arr = new Uint8Array([0x01, 0x00, 0x01]);
+    var bn = new BN(arr);
+    assert.ok(bn == 65537);
+    assert.ok(bn.toNumber() === 65537);
+});
+
+QUnit.test('GenKey does the right thing', function(assert) {
+  var done = assert.async();
+  GenKey(function (key) {
+    assert.equal(key.e.toNumber(), 65537);
+    assert.deepEqual(key.e.toArray(), [0x01, 0x00, 0x01]);
+    done();
+  });
 });
