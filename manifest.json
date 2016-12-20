@@ -9,6 +9,9 @@
     "scripts": [
       "lib/bn.js",
       "src/blind.js",
+      "src/tokens.js",
+      "src/keys.js",
+      "src/utils.js",
       "src/background.js"
     ]
   },
