@@ -1,4 +1,3 @@
-var p = console.log;
 var unsigned = [];
 var pending = new Set();
 var signed = [];
@@ -31,9 +30,8 @@ function receiveSigs(error, tokenArr) {
   console.log(tokenArr);
 }
 
-function submitToken(origin) {
+function submitTokens(origin) {
   // get tokens
-  p('sthnhnh');
   var data = [];
   var tokens = getTokensToSend();
   while (tokens.length) {
@@ -66,11 +64,10 @@ function submitToken(origin) {
 
 function init() {
   fill();
-  p('filled');
   chrome.runtime.onMessage.addListener(function(request, sender) {
     if (request.action == "hasCaptchaBypass") {
       if (request.source == true) {
-        submit(sender.url);
+        submitTokens(sender.url);
       }
     }
   });

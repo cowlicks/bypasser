@@ -1,6 +1,8 @@
 // run me with:
 // node server.js
 var blind = require('./blind.js');
+var keys = require('./keys.js');
+var BN = require('../lib/bn.js');
 var http = require('http');
 
 const PORT=8080; 
@@ -31,10 +33,31 @@ function helloHandler(req, res) {
   res.end(html);
 }
 
-// just echo for now
 function captchaBypassHandler(req, res) {
   req.on('data', function(data) {
     var parsed = JSON.parse(data);
-    res.end(data);
+    var sigs = sign(parsed);
+    var out = JSON.stringify({"sigs":sigs});
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Content-Length': out.length,
+    });
+    res.end(out);
   });
+}
+
+function sign(parsed) {
+  console.log(parsed);
+  var tokens = parsed['tokens'];
+  var sigs = {};
+  for (i = 0; i < tokens.length; i++) {
+    blinded = tokens[i];
+    number = new BN.BN(blinded);
+    console.log(blind);
+    signedarr = blind.BlindSign(keys.GetKey(), number.toArray());
+    sig = new BN.BN(signedarr).toString();
+    console.log(sig);
+    sigs[blinded] = new BN.BN(signedarr).toString();
+  }
+  return sigs;
 }
