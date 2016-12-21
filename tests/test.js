@@ -67,8 +67,8 @@ QUnit.test('GenKey does the right thing', function(assert) {
 
 QUnit.test('math-test', function(assert) {
   var done = assert.async();
-  Token.init().then(token => {
-    var key = GetKey();
+  var key = GetKey();
+  Token.init(key).then(token => {
     var red = BN.red(key.n);
 
     var hash = new BN(token.hash).toRed(red);
