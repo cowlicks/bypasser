@@ -1,5 +1,5 @@
 var unsigned = [];
-var pending = new Set();
+var pending = {};
 var signed = [];
 
 function fill() {
@@ -7,6 +7,7 @@ function fill() {
   if (nMoreTokens > 0) {
     MakeTokens(nMoreTokens).then(tokens => {
       Array.prototype.push.apply(unsigned, tokens);
+      console.log(unsigned.length + " unsigned tokens ready");
     });
   }
 }
@@ -26,8 +27,23 @@ function getTokensToSend() {
   return toSend
 }
 
-function receiveSigs(error, tokenArr) {
-  console.log(tokenArr);
+function receiveSigs(error, data) {
+  var sigs = data['sigs'];
+  console.log(sigs.length + " tokens received");
+  for (var i = 0; i < sigs.length; i++) {
+    var blinded = sigs[i][0];
+    var blindSig = sigs[i][1];
+    if (blinded in pending) {
+      var token = pending[blinded];
+      var sig = Unblind(GetKey(), token, blindSig);
+      delete pending[blinded];
+      VerifySig(GetKey(), token, sig, function (res) {
+        if (res == true) {
+          signed.push(token);
+        }
+      });
+    }
+  }
 }
 
 function submitTokens(origin) {
@@ -36,10 +52,10 @@ function submitTokens(origin) {
   var tokens = getTokensToSend();
   while (tokens.length) {
     var t = tokens.pop();
-    var h = new BN(tokens.pop().hash);
-    var tstring = h.toString();
-    pending.add(tstring);
-    data.push(tstring);
+    var b = new BN(t.blinded);
+    var bstring = b.toString();
+    pending[bstring] = t;
+    data.push(bstring);
   }
 
   var xhr = new XMLHttpRequest();   // new HttpRequest instance 
@@ -60,6 +76,7 @@ function submitTokens(origin) {
   xhr.open("POST", target, true);
   xhr.setRequestHeader("Content-Type", "application/json");
   xhr.send(JSON.stringify({tokens: data}));
+  console.log(data.length + " tokens sent");
 }
 
 function init() {
