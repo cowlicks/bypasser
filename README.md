@@ -5,8 +5,8 @@ Where I'm at:
 - [x] Get a test server responding with proper meta tags.
 - [x] Client/extension detects meta tag.
 - [x] Client submit tokens for signing.
-- [ ] Server sign and respond.
-- [ ] Client recieve tokens.
+- [x] Server sign and respond.
+- [x] Client recieve tokens.
 - [ ] Client redeem tokens.
 - [ ] Server verify tokens.
 - [ ] transport encryption/jwt.
@@ -17,3 +17,4 @@ Also:
 - [ ] Make signature verification constant time.
 - [ ] compare formats for sending tokens: stringifyed nums? bytes?
 - [ ] fill unsigned token pool asynchronously
+- [ ] Move blind, keys, tokens to a node package.
