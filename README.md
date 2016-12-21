@@ -7,8 +7,8 @@ Where I'm at:
 - [x] Client submit tokens for signing.
 - [x] Server sign and respond.
 - [x] Client recieve tokens.
-- [ ] Client redeem tokens.
-- [ ] Server verify tokens.
+- [x] Client redeem tokens.
+- [x] Server verify tokens.
 - [ ] transport encryption/jwt.
  
 Also:

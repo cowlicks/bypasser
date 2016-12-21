@@ -39,7 +39,7 @@ function receiveSigs(error, data) {
       delete pending[blinded];
       VerifySig(GetKey(), token, sig, function (res) {
         if (res == true) {
-          signed.push(token);
+          signed.push([token, sig]);
         }
       });
     }
@@ -75,8 +75,47 @@ function submitTokens(origin) {
   var target = origin + 'captcha-bypass';
   xhr.open("POST", target, true);
   xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.send(JSON.stringify({tokens: data}));
+  xhr.send(JSON.stringify({'tokens': data}));
   console.log(data.length + " tokens sent");
+}
+
+function RedeemToken(origin) {
+  if (!signed.length) {
+    return submitTokens(origin)
+  }
+  var tokensig = signed.pop()
+  var token = tokensig[0];
+  var sig = tokensig[1];
+
+  var data = [token.bytes, sig]
+
+  var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+  xhr.onreadystatechange = function(){
+    //on done
+    if(xhr.readyState == xhr.DONE){
+      //on success
+      if(xhr.status == 200) {
+        bypass(null, xhr.responseText);
+      } else {
+        var error = {status: xhr.status, message: xhr.responseText, object: xhr};
+        bypass(error, error.message);
+      }
+    }
+  };
+
+  var target = origin + 'redeem';
+  xhr.open("POST", target, true);
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify({'bytes': token.bytes, 'sig': sig}));
+  console.log('redeeming token');
+}
+
+function bypass(err, data) {
+if (err == null) {
+    console.log('redemption success');
+  } else {
+    console.log('redemption failed');
+  }
 }
 
 function init() {
@@ -84,7 +123,7 @@ function init() {
   chrome.runtime.onMessage.addListener(function(request, sender) {
     if (request.action == "hasCaptchaBypass") {
       if (request.source == true) {
-        submitTokens(sender.url);
+        RedeemToken(sender.url);
       }
     }
   });
