@@ -1,6 +1,6 @@
-WIP implementation of Cloudflare's challenge bypass specification.
+## Minimal implementation of Cloudflare's captcha challenge bypass specification
 
-Where I'm at:
+Where we're at:
 - [x] Implement RSA blinding/unblinding/signing etc.
 - [x] Get a test server responding with proper meta tags.
 - [x] Client/extension detects meta tag.
@@ -11,7 +11,7 @@ Where I'm at:
 - [x] Server verify tokens.
 - [ ] Transport encryption/jwt.
  
-Also:
+Also todo:
 - [ ] Handle multiple signing keys better
 - [ ] Use a full domain hash for blinding the message
 - [ ] Make signature verification constant time
