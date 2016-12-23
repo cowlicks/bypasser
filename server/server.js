@@ -93,7 +93,7 @@ server.listen(PORT, function(){
 
 function helloHandler(req, res) {
   var header = "<meta id=\"captcha-bypass\">";
-  var body = 'stuff';
+  var body = '*pretends to be a captcha*';
   var html = '<!DOCTYPE html>' + '<html><head>' + header + '</head><body>' + body + '</body></html>';
   res.writeHead(200, {
     'Content-Type': 'text/html',
@@ -104,15 +104,22 @@ function helloHandler(req, res) {
 }
 
 function captchaBypassHandler(req, res) {
-  req.on('data', function(data) {
-    var parsed = JSON.parse(data);
+  console.log('Received token signing request.');
+  var allData = ''
+  req.on('data', function(chunk) {
+    allData += chunk
+  });
+
+  req.on('end', function() {
+    var parsed = JSON.parse(allData);
     var sigs = sign(parsed);
-    var out = JSON.stringify({"sigs":sigs});
+    var out = JSON.stringify({'sigs':sigs});
     res.writeHead(200, {
       'Content-Type': 'application/json',
       'Content-Length': out.length,
     });
     res.end(out);
+    console.log('Returning signed tokens.');
   });
 }
 
@@ -138,14 +145,15 @@ function redemptionHandler(req, res) {
     verifySig(getKey(), token, sig, function (isgood) {
       if (isgood == true) {
         var out = 'bypass successful';
-        console.log('good');
+        console.log('valid token received');
+        console.log('redirecting ...');
         res.writeHead(200, {
           'Content-Type': 'text/plain',
           'Content-Length': out.length,
         });
         res.end(out);
       } else {
-        var out = 'bypass successful';
+        var out = 'bypass failure';
         console.log('bad');
         res.writeHead(400, {
           'Content-Type': 'text/plain',
