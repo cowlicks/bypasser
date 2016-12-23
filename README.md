@@ -1,5 +1,7 @@
 ## Minimal implementation of Cloudflare's captcha challenge bypass specification
 
+Video demo here https://youtu.be/cO4SsoHN7Yw
+
 Where we're at:
 - [x] Implement RSA blinding/unblinding/signing etc.
 - [x] Get a test server responding with proper meta tags.
