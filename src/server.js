@@ -5,8 +5,9 @@ var BN = require('../lib/bn.js');
 var http = require('http');
 var crypto = require('crypto');
 
-/*** redefine here until I package them ***/
-function BlindSign(privkey, blinded) {
+/*** Redefine stuff here until it is packaged for node. ***/
+
+function blindSign(privkey, blinded) {
   var red = BN.red(privkey.n);
   var b = new BN(blinded).toRed(red);
 
@@ -16,7 +17,9 @@ function BlindSign(privkey, blinded) {
   return blindSig.toArray();
 }
 
-function VerifySig(pubkey, token, sig, callback) {
+// This is different from what is in blind.js because we can't access the
+// WebCrypto API
+function verifySig(pubkey, token, sig, callback) {
   var hasher = crypto.createHash('sha256');
   hasher.update(new Uint8Array(token.bytes));
   var hashed = new Uint8Array(hasher.digest());
@@ -32,8 +35,8 @@ function VerifySig(pubkey, token, sig, callback) {
 
 var key = '{"n":"27078503134310472095273564050868549370581210988165151186608239950433775341142853609302452603721286363944735339635906695148859929873143935208859650676559330496710101232735428083632610330803386413237198099432106075875388228342037835701362201481300215338986973493899312908401246049328213182416267543699926247361054855676369509272957284461526963587506486311277477061336140145732497974335439343981017853334084143823773064880492250707623430281625996977408518602939820549786730404917731758128039211938903112203780487181131502811467264358951815828061113408643328733100797979373633510022278953590131112945888334643839522717831","e":"65537","d":"10519120669185502984170310926210574155448480256156012390861027830051627117661106093340115367473949517671987076182775356696138440188601422806694811275684330914075140260985569427669905952544721526688829614011047020548873291504950505197384382677150650507579983187835613582174761175669423065003520994172092441392750693079903460236932266493342375279149391905460456823540463457482312248909923314487054419085215162422384203750531959466117589251701047201443672296459092895460130376379220051501774673408481109350420318058119633513479152641715868262334491673715385879705133583584437896655840032622540660042987140342599933378121"}'
 
-function GetKey() {
-  return KeyFromString(key);
+function getKey() {
+  return keyFromString(key);
 }
 //
 // takes bytes, sets as BN's
@@ -44,7 +47,7 @@ function Key(n, e, d) {
   this.d = new BN(d);
 }
 
-function KeyFromString(str) {
+function keyFromString(str) {
   var n = e = d = null;
   var parsed = JSON.parse(str);
   if ('n' in parsed) {
@@ -67,6 +70,7 @@ Key.prototype = {
     return JSON.stringify({'n': n, 'e': e, 'd': d});
   }
 }
+
 /*** start server stuff ***/
 
 const PORT=8080; 
@@ -75,7 +79,7 @@ function handleRequest(req, res){
   if (req.url == '/captcha-bypass') {
     captchaBypassHandler(req, res);
   } else if (req.url == '/redeem') {
-    redeem(req, res);
+    redemptionHandler(req, res);
   } else {
     helloHandler(req, res);
   }
@@ -118,20 +122,20 @@ function sign(parsed) {
   for (i = 0; i < tokens.length; i++) {
     blinded = tokens[i];
     number = new BN.BN(blinded);
-    signedarr = BlindSign(GetKey(), number.toArray());
-    sig = new BN.BN(signedarr).toString();
-    sigs.push([blinded, new BN.BN(signedarr).toString()]);
+    signedArr = blindSign(getKey(), number.toArray());
+    sig = new BN.BN(signedArr).toString();
+    sigs.push([blinded, sig]);
   }
   return sigs;
 }
 
-function redeem(req, res) {
+function redemptionHandler(req, res) {
   req.on('data', function(data) {
     var parsed = JSON.parse(data);
     var token = {};
     token.bytes = parsed.bytes;
     var sig = parsed.sig;
-    VerifySig(GetKey(), token, sig, function (isgood) {
+    verifySig(getKey(), token, sig, function (isgood) {
       if (isgood == true) {
         var out = 'bypass successful';
         console.log('good');

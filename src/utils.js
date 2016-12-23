@@ -1,4 +1,4 @@
-function RandArray() {
+function randArray() {
   var bytes = new Uint8Array(32);
   window.crypto.getRandomValues(bytes);
   return Array.from(bytes);
@@ -15,7 +15,7 @@ function base64UrlDecode(str) {
 }
 
 // Generate an RSA key for testing.
-function GenKey(callback) {
+function genKey(callback) {
   window.crypto.subtle.generateKey({
     name: "RSASSA-PKCS1-v1_5",
     modulusLength: 2048,
@@ -26,9 +26,9 @@ function GenKey(callback) {
   }, true, ["sign", "verify"]).then(function(keyPair) {
     window.crypto.subtle.exportKey("jwk", keyPair.privateKey).then(
       function(key) {
-        n = base64UrlDecode(key.n);
-        e = base64UrlDecode(key.e);
-        d = base64UrlDecode(key.d);
+        var n = base64UrlDecode(key.n);
+        var e = base64UrlDecode(key.e);
+        var d = base64UrlDecode(key.d);
         var k = new Key(n, e, d);
         callback(k);
       });

@@ -2,18 +2,18 @@ var unsigned = [];
 var pending = {};
 var signed = [];
 
-function fill() {
+function fillUnsigned() {
   var nMoreTokens = 100 - unsigned.length
   if (nMoreTokens > 0) {
-    MakeTokens(nMoreTokens).then(tokens => {
+    makeTokens(nMoreTokens).then(tokens => {
       Array.prototype.push.apply(unsigned, tokens);
-      console.log(unsigned.length + " unsigned tokens ready");
+      console.log(unsigned.length + " available unsigned tokens ready");
     });
   }
 }
 
 function getTokensToSend() {
-  var nWanted = 50;
+  var nWanted = 10;
   var toSend = [];
   while (toSend.length < nWanted) {
     while ((toSend.length < nWanted) && (unsigned.length)) {
@@ -22,24 +22,25 @@ function getTokensToSend() {
         toSend.push(t);
       }
     }
-    fill()
+    fillUnsigned()
   }
   return toSend
 }
 
 function receiveSigs(error, data) {
   var sigs = data['sigs'];
-  console.log(sigs.length + " tokens received");
+  console.log(sigs.length + " valid token signatures received");
   for (var i = 0; i < sigs.length; i++) {
     var blinded = sigs[i][0];
     var blindSig = sigs[i][1];
     if (blinded in pending) {
       var token = pending[blinded];
-      var sig = Unblind(GetKey(), token, blindSig);
+      var sig = unblind(getKey(), token, blindSig);
       delete pending[blinded];
-      VerifySig(GetKey(), token, sig, function (res) {
+      verifySig(getKey(), token, sig, function (res) {
         if (res == true) {
           signed.push([token, sig]);
+          updateBadge();
         }
       });
     }
@@ -76,10 +77,10 @@ function submitTokens(origin) {
   xhr.open("POST", target, true);
   xhr.setRequestHeader("Content-Type", "application/json");
   xhr.send(JSON.stringify({'tokens': data}));
-  console.log(data.length + " tokens sent");
+  console.log(data.length + " tokens submited for signing");
 }
 
-function RedeemToken(origin) {
+function redeemToken(origin) {
   if (!signed.length) {
     return submitTokens(origin)
   }
@@ -111,22 +112,29 @@ function RedeemToken(origin) {
 }
 
 function bypass(err, data) {
-if (err == null) {
-    console.log('redemption success');
-  } else {
-    console.log('redemption failed');
-  }
+  if (err == null) {
+      console.log('redemption success');
+    } else {
+      console.log('redemption failed');
+    }
+}
+
+function updateBadge() {
+  chrome.browserAction.setBadgeText({'text': signed.length.toString()});
 }
 
 function init() {
-  fill();
+  fillUnsigned();
   chrome.runtime.onMessage.addListener(function(request, sender) {
     if (request.action == "hasCaptchaBypass") {
       if (request.source == true) {
-        RedeemToken(sender.url);
+        redeemToken(sender.url);
       }
     }
   });
+  chrome.tabs.onUpdated.addListener(function () {
+    updateBadge();
+  });
 }
-console.log('go!');
+console.log('Go!');
 init();

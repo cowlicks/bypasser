@@ -9,12 +9,14 @@ Where I'm at:
 - [x] Client recieve tokens.
 - [x] Client redeem tokens.
 - [x] Server verify tokens.
-- [ ] transport encryption/jwt.
+- [ ] Transport encryption/jwt.
  
 Also:
-- [ ] Handle multiple signing keys better.
-- [ ] Use a full domain hash for blinding the message.
-- [ ] Make signature verification constant time.
-- [ ] compare formats for sending tokens: stringifyed nums? bytes?
-- [ ] fill unsigned token pool asynchronously
-- [ ] Move blind, keys, tokens to a node package.
+- [ ] Handle multiple signing keys better
+- [ ] Use a full domain hash for blinding the message
+- [ ] Make signature verification constant time
+- [ ] Compare formats for sending tokens: stringifyed nums? bytes?
+- [ ] Fill unsigned token pool asynchronously
+- [ ] Move blind, keys, tokens to a node package
+- [ ] Refresh page on redemption
+- [ ] Enforce number of signatures allowed per captcha on server

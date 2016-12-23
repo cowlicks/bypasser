@@ -1,5 +1,5 @@
 // Create the blinded message
-function Blind(pubkey, hashed, blinder) {
+function blind(pubkey, hashed, blinder) {
   var red = BN.red(pubkey.n);
 
   var h = new BN(hashed).toRed(red);
@@ -12,7 +12,7 @@ function Blind(pubkey, hashed, blinder) {
 }
 
 // Server signs blinded message
-function BlindSign(privkey, blinded) {
+function blindSign(privkey, blinded) {
   var red = BN.red(privkey.n);
   var b = new BN(blinded).toRed(red);
 
@@ -23,7 +23,7 @@ function BlindSign(privkey, blinded) {
 }
 
 // Client unblinds signature
-function Unblind(pubkey, token, blindSig) {
+function unblind(pubkey, token, blindSig) {
   var red = BN.red(pubkey.n);
 
   var bs = new BN(blindSig).toRed(red);
@@ -38,7 +38,7 @@ function Unblind(pubkey, token, blindSig) {
   return sig.toArray();
 }
 
-function VerifySig(pubkey, token, sig, callback) {
+function verifySig(pubkey, token, sig, callback) {
   doHash(token.bytes).then(hashed => {
     var red = BN.red(pubkey.n);
 

@@ -1,10 +1,10 @@
 QUnit.test('raw-rsa', function(assert) {
-  var key = GetKey();
-  var arr = RandArray();
+  var key = getKey();
+  var arr = randArray();
 
   var red = BN.red(key.n);
 
-  var sigarr = BlindSign(key, arr);
+  var sigarr = blindSign(key, arr);
   var sig = new BN(sigarr).toRed(red);
   var orig = new BN(arr).toRed(red);
 
@@ -13,8 +13,8 @@ QUnit.test('raw-rsa', function(assert) {
 })
 
 QUnit.test('bn invmod', function(assert) {
-  var key = GetKey();
-  var arr = RandArray();
+  var key = getKey();
+  var arr = randArray();
 
   var red = BN.red(key.n);
   var orig = new BN(arr).toRed(red);
@@ -26,18 +26,18 @@ QUnit.test('bn invmod', function(assert) {
 
 QUnit.test('integration-test', function(assert) {
   var done = assert.async();
-  GenKey(function (key) {
+  genKey(function (key) {
     // client creates a token
     Token.init(key).then(token => {
       // client sends blinded token to server
       // server returns the blinded signature
-      var blindSig = BlindSign(key, token.blinded);
+      var blindSig = blindSign(key, token.blinded);
 
       // client unblinds the signature
-      var sig = Unblind(key, token, blindSig);
+      var sig = unblind(key, token, blindSig);
 
       // We verify the signature
-      VerifySig(key, token, sig, function (res) {
+      verifySig(key, token, sig, function (res) {
         assert.ok(res);
         done();
       });
@@ -46,7 +46,7 @@ QUnit.test('integration-test', function(assert) {
 });
 
 QUnit.test('randarr', function(assert) {
-  assert.equal(RandArray().length, 32);
+  assert.equal(randArray().length, 32);
 });
 
 QUnit.test('BN works like I think it does', function(assert) {
@@ -56,9 +56,9 @@ QUnit.test('BN works like I think it does', function(assert) {
     assert.ok(bn.toNumber() === 65537);
 });
 
-QUnit.test('GenKey does the right thing', function(assert) {
+QUnit.test('genKey does the right thing', function(assert) {
   var done = assert.async();
-  GenKey(function (key) {
+  genKey(function (key) {
     assert.equal(key.e.toNumber(), 65537);
     assert.deepEqual(key.e.toArray(), [0x01, 0x00, 0x01]);
     done();
@@ -67,7 +67,7 @@ QUnit.test('GenKey does the right thing', function(assert) {
 
 QUnit.test('math-test', function(assert) {
   var done = assert.async();
-  var key = GetKey();
+  var key = getKey();
   Token.init(key).then(token => {
     var red = BN.red(key.n);
 
