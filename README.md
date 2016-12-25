@@ -1,4 +1,4 @@
-## Minimal implementation of Cloudflare's captcha challenge bypass specification
+## Minimal implementation of Cloudflare's captcha challenge bypass specification for Tor
 
 Video demo here https://youtu.be/cO4SsoHN7Yw
 
