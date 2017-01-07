@@ -1,6 +1,8 @@
 ## Minimal implementation of Cloudflare's captcha challenge bypass specification for Tor
 
-Video demo here https://youtu.be/cO4SsoHN7Yw
+Cloudflare's spec is [here](https://github.com/cloudflare/challenge-bypass-specification/).
+
+A vide demo of this extension working is [here](https://youtu.be/cO4SsoHN7Yw).
 
 Where we're at:
 - [x] Implement RSA blinding/unblinding/signing etc.
