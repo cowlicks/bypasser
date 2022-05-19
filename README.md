@@ -2,7 +2,7 @@
 
 Cloudflare's spec is [here](https://github.com/cloudflare/challenge-bypass-specification/).
 
-A vide demo of this extension working is [here](https://youtu.be/cO4SsoHN7Yw).
+A video demo of this extension working is [here](https://youtu.be/cO4SsoHN7Yw).
 
 Where we're at:
 - [x] Implement RSA blinding/unblinding/signing etc.
